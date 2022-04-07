@@ -1,5 +1,6 @@
 from http.client import HTTPResponse
 from lib2to3.pgen2 import parse
+from lzma import is_check_supported
 from pydoc import resolve
 from urllib import request, response
 from uuid import uuid4
@@ -11,6 +12,8 @@ from django.http import JsonResponse
 from urllib.parse import urlparse
 import requests
 from django.http import HttpResponse
+
+
 def index(request):
     return render(request,"index.html")
 
@@ -132,10 +135,31 @@ def add_transaction(request):
 #part3 Decentralizing our Blockchain
 
 
+
+# Checking if the Blockchain is valid
+def replace_chain(request):
+    if request.method == 'GET':
+        is_chain_replaced = blockchain.replace_chain()
+        if is_chain_replaced:
+            response = {'message':"The Node had different chains so the chain was replaced by longest one","new_chain":blockchain.chain}
+        else:
+            response = {'message':"All good. the chain is largest one.",
+            "actual_chain":blockchain.chain}
+    return JsonResponse(response)
+    
+
 #Connecting new nodes
 def connect_node(request):
     json=request.get_json()
-    json.get('node')
+    nodes=json.get('nodes')
+    if nodes is None:
+        return HttpResponse("No Node",status=400)
+    for node in nodes:
+        blockchain.add_node(node)
+    response={"message": "All the nodes are now connect. The blockcain now contains the following nodes", "Total_nodes":
+    list(blockchain.nodes)}
+    return JsonResponse(response)
+
     
 
 # Getting the full Blockchain
@@ -154,3 +178,4 @@ def is_valid(request):
         else:
             response = {'message': 'Houston, we have a problem. The Blockchain is not valid.'}
     return JsonResponse(response)
+    
